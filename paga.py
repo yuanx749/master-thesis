@@ -6,6 +6,7 @@
 import os
 import random
 import time
+from pathlib import Path
 import pandas as pd
 import numpy as np
 import scanpy as sc
@@ -26,14 +27,14 @@ sc.set_figure_params(dpi_save=200)
 
 
 # %%
-data_dir = os.path.join(os.getcwd(), "data")
-result_dir = os.path.join(os.getcwd(), "results")
+data_dir = Path.cwd() / "data"
+result_dir = Path.cwd() / "results"
 
 
 # %%
 model = "SAGE"
 adata_name = "{}-20201013.h5ad".format(model)
-adata = sc.read(os.path.join(result_dir, adata_name))
+adata = sc.read(result_dir / adata_name)
 print(adata_name)
 print(adata)
 

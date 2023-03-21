@@ -19,6 +19,7 @@ np.random.seed(SEED)
 torch.manual_seed(SEED)
 
 # %%
+from pathlib import Path
 import pandas as pd
 import torch.nn as nn
 import torch.nn.functional as F
@@ -32,23 +33,16 @@ from sklearn.preprocessing import OneHotEncoder
 # Load graph data and convert to PyG input.
 
 # %%
-data_dir = os.path.join(os.getcwd(), "data")
-df_taglist = pd.read_csv(
-    os.path.join(data_dir, "taglist_heart.csv"), names=["tag", "gene"]
-)
+data_dir = Path.cwd() / "data"
+df_taglist = pd.read_csv(data_dir / "taglist_heart.csv", names=["tag", "gene"])
 enc = OneHotEncoder(sparse=False).fit(df_taglist["gene"].to_numpy().reshape(-1, 1))
 
-df_taglist = pd.read_csv(
-    os.path.join(data_dir, "taglist_heart.csv"), names=["tag", "gene"]
-)
-enc = OneHotEncoder(sparse=False).fit(df_taglist["gene"].to_numpy().reshape(-1, 1))
-
-result_dir = os.path.join(os.getcwd(), "results")
-df_nodes = pd.read_csv(os.path.join(result_dir, "nodes.csv"), index_col=0)
+result_dir = Path.cwd() / "results"
+df_nodes = pd.read_csv(result_dir / "nodes.csv", index_col=0)
 df_nodes = pd.DataFrame(
     data=enc.transform(df_nodes["gene"].to_numpy().reshape(-1, 1)), index=df_nodes.index
 )
-df_edges = pd.read_csv(os.path.join(result_dir, "edges.csv"), index_col=0)
+df_edges = pd.read_csv(result_dir / "edges.csv", index_col=0)
 
 # df_nodes = df_nodes[df_nodes.index.str.startswith('6')]
 # df_edges = df_edges[df_edges.index.str.startswith('6')]
@@ -119,9 +113,9 @@ model = DeepGraphInfomax(
 ).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-model_dir = os.path.join(os.getcwd(), "models")
-os.makedirs(model_dir, exist_ok=True)
-model_name = os.path.join(model_dir, time.strftime("gcn-dgi-%Y%m%d.pt"))
+model_dir = Path.cwd() / "models"
+model_dir.mkdir(exist_ok=True)
+model_name = model_dir / time.strftime("gcn-dgi-%Y%m%d.pt")
 best_loss = float("inf")
 for epoch in range(1, epochs + 1):
     loss = train(epoch)
@@ -139,12 +133,12 @@ model.eval()
 z = model.encoder(data.x, data.adj_t)
 
 node_embeddings = z.detach().cpu().numpy()
-result_dir = os.path.join(os.getcwd(), "results")
-os.makedirs(result_dir, exist_ok=True)
+result_dir = Path.cwd() / "results"
+result_dir.mkdir(exist_ok=True)
 embedding_name = time.strftime(
     "{}-embedding-%Y%m%d-%H%M%S.npy".format(type(model.encoder).__name__)
 )
-np.save(os.path.join(result_dir, embedding_name), node_embeddings)
+np.save(result_dir / embedding_name, node_embeddings)
 print(embedding_name)
 
 # %% [markdown]
@@ -155,7 +149,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 
-df_celltype = pd.read_csv(os.path.join(result_dir, "celltype.csv"), index_col=0)
+df_celltype = pd.read_csv(result_dir / "celltype.csv", index_col=0)
 df_nodes = pd.DataFrame(data=node_embeddings, index=df_nodes.index)
 df_nodes = pd.concat([df_nodes, df_celltype], axis=1).reindex(df_nodes.index)
 X = df_nodes.loc[df_nodes["cell_type_id"] >= 0].to_numpy()

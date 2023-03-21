@@ -4,22 +4,23 @@
 # To add a new markdown cell, type '# %% [markdown]'
 # %%
 import os
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
 # %%
-data_dir = os.path.join(os.getcwd(), "data")
-result_dir = os.path.join(os.getcwd(), "results")
-fig_dir = os.path.join(os.getcwd(), "figures")
-os.makedirs(fig_dir, exist_ok=True)
+data_dir = Path.cwd() / "data"
+result_dir = Path.cwd() / "results"
+fig_dir = Path.cwd() / "figures"
+fig_dir.mkdir(exist_ok=True)
 
 
 # %%
 file_name = "SAGE-umap-20201013.npy"
 model = "SAGE"
-X_embedding = np.load(os.path.join(result_dir, file_name))
+X_embedding = np.load(result_dir / file_name)
 print(X_embedding.shape)
 embedding_rgb = (X_embedding - np.min(X_embedding, axis=0)) / np.ptp(
     X_embedding, axis=0
@@ -27,12 +28,12 @@ embedding_rgb = (X_embedding - np.min(X_embedding, axis=0)) / np.ptp(
 
 df = {}
 for name in ["4.5_1", "4.5_2", "4.5_3", "6.5_1", "6.5_2", "9.5_1", "9.5_2", "9.5_3"]:
-    df[name] = pd.read_csv(os.path.join(data_dir, "spots_PCW{}.csv".format(name)))
+    df[name] = pd.read_csv(data_dir / "spots_PCW{}.csv".format(name))
     df[name]["pcw"] = int(name[0])
     df[name]["section"] = int(name[-1])
     df[name] = df[name].set_index("{}_".format(name) + df[name].index.astype(str))
 df_heart = pd.concat(df.values())
-df_nodes = pd.read_csv(os.path.join(result_dir, "nodes.csv"), index_col=0)
+df_nodes = pd.read_csv(result_dir / "nodes.csv", index_col=0)
 df_heart = df_heart.loc[df_nodes.index]
 
 
@@ -61,7 +62,7 @@ def umap_plot(pcw):
             # axes[s,i].set_title('{}.5_{}'.format(pcw, s+1), fontsize='xx-large')
     fig.suptitle("{}.5".format(pcw), fontsize=100)
     # fig.tight_layout()
-    fig.savefig(os.path.join(fig_dir, "{}-umap-{}.png".format(model, pcw)), dpi=200)
+    fig.savefig(fig_dir / "{}-umap-{}.png".format(model, pcw), dpi=200)
     plt.close()
 
     fig, axes = plt.subplots(1, n_section, figsize=(7 * n_section, 7))
@@ -85,9 +86,7 @@ def umap_plot(pcw):
         axes[s].set_yticks([])
     # fig.suptitle('Spatial ({})'.format(model), y=1.0)
     fig.tight_layout()
-    fig.savefig(
-        os.path.join(fig_dir, "spatial-{}-umap-{}.png".format(model, pcw)), dpi=200
-    )
+    fig.savefig(fig_dir / "spatial-{}-umap-{}.png".format(model, pcw), dpi=200)
     plt.close()
 
 

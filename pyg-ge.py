@@ -19,6 +19,7 @@ np.random.seed(SEED)
 torch.manual_seed(SEED)
 
 # %%
+from pathlib import Path
 import pandas as pd
 import scanpy as sc
 import seaborn as sns
@@ -39,20 +40,18 @@ from scipy.cluster.vq import vq
 # Load graph data and clustering result.
 
 # %%
-data_dir = os.path.join(os.getcwd(), "data")
-df_taglist = pd.read_csv(
-    os.path.join(data_dir, "taglist_heart.csv"), names=["tag", "gene"]
-)
+data_dir = Path.cwd() / "data"
+df_taglist = pd.read_csv(data_dir / "taglist_heart.csv", names=["tag", "gene"])
 enc = OneHotEncoder(sparse=False).fit(df_taglist["gene"].to_numpy().reshape(-1, 1))
 
-result_dir = os.path.join(os.getcwd(), "results")
-df_nodes = pd.read_csv(os.path.join(result_dir, "nodes.csv"), index_col=0)
+result_dir = Path.cwd() / "results"
+df_nodes = pd.read_csv(result_dir / "nodes.csv", index_col=0)
 df_nodes = pd.DataFrame(
     data=enc.transform(df_nodes["gene"].to_numpy().reshape(-1, 1)), index=df_nodes.index
 )
-df_edges = pd.read_csv(os.path.join(result_dir, "edges.csv"), index_col=0)
+df_edges = pd.read_csv(result_dir / "edges.csv", index_col=0)
 adata_name = "SAGE-20201013.h5ad"
-adata = sc.read(os.path.join(result_dir, adata_name))
+adata = sc.read(result_dir / adata_name)
 
 # df_nodes = df_nodes[df_nodes.index.str.startswith('6')]
 # df_edges = df_edges[df_edges.index.str.startswith('6')]
@@ -129,8 +128,8 @@ print("Score: {:.4f}".format(score))
 # Make plots.
 
 # %%
-fig_dir = os.path.join(os.getcwd(), "figures")
-os.makedirs(fig_dir, exist_ok=True)
+fig_dir = Path.cwd() / "figures"
+fig_dir.mkdir(exist_ok=True)
 df_feat = pd.DataFrame(
     data=np.zeros((data.num_features, num_clusters)), index=df_taglist["gene"]
 )
@@ -142,7 +141,7 @@ for i in range(num_clusters):
     )
     df_feat.iloc[:, i] = node_feat_mask.cpu().numpy()
     # ax, G = explainer.visualize_subgraph(node_idx, data.edge_index, edge_mask, y=data.y)
-    # plt.savefig(os.path.join(fig_dir, 'explainer-{}.png'.format(i)))
+    # plt.savefig(fig_dir / 'explainer-{}.png'.format(i))
 fig, ax = plt.subplots(figsize=(10, 10))
 g = sns.clustermap(
     df_feat.sort_index(),
@@ -153,4 +152,4 @@ g = sns.clustermap(
     xticklabels=True,
     yticklabels=True,
 )
-g.savefig(os.path.join(fig_dir, "explainer-sup.png"))
+g.savefig(fig_dir / "explainer-sup.png")

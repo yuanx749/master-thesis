@@ -2,14 +2,16 @@
 
 # %%
 import os
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from PIL import Image
 
 
 # %%
-data_dir = os.path.join(os.getcwd(), "data")
-result_dir = os.path.join(os.getcwd(), "results")
+data_dir = Path.cwd() / "data"
+result_dir = Path.cwd() / "results"
 
 
 # %%
@@ -26,7 +28,7 @@ for i in range(3):
         name = name_list[3 * i + j]
         if name == "":
             continue
-        im = Image.open(os.path.join(data_dir, "nuclei_PCW{}.tif".format(name)))
+        im = Image.open(data_dir / "nuclei_PCW{}.tif".format(name))
         src = np.array(im)
         print(src.shape)
         dst = src / 256
@@ -39,4 +41,4 @@ for i in range(3):
         ] = dst
 im_big = Image.fromarray(imarray_big)
 print(imarray_big.shape)
-im_big.save(os.path.join(result_dir, "nuclei_heart.tif"), format="tiff", dpi=(96, 96))
+im_big.save(result_dir / "nuclei_heart.tif", format="tiff", dpi=(96, 96))

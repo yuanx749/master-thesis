@@ -22,6 +22,7 @@ tf.random.set_seed(SEED)
 
 
 # %%
+from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
@@ -46,20 +47,18 @@ from sklearn.preprocessing import OneHotEncoder
 # Load data.
 
 # %%
-data_dir = os.path.join(os.getcwd(), "data")
-df_taglist = pd.read_csv(
-    os.path.join(data_dir, "taglist_heart.csv"), names=["tag", "gene"]
-)
+data_dir = Path.cwd() / "data"
+df_taglist = pd.read_csv(data_dir / "taglist_heart.csv", names=["tag", "gene"])
 enc = OneHotEncoder(sparse=False).fit(df_taglist["gene"].to_numpy().reshape(-1, 1))
 
 
 # %%
-result_dir = os.path.join(os.getcwd(), "results")
-df_nodes = pd.read_csv(os.path.join(result_dir, "nodes.csv"), index_col=0)
+result_dir = Path.cwd() / "results"
+df_nodes = pd.read_csv(result_dir / "nodes.csv", index_col=0)
 df_nodes = pd.DataFrame(
     data=enc.transform(df_nodes["gene"].to_numpy().reshape(-1, 1)), index=df_nodes.index
 )
-df_edges = pd.read_csv(os.path.join(result_dir, "edges.csv"), index_col=0)
+df_edges = pd.read_csv(result_dir / "edges.csv", index_col=0)
 df_edges = df_edges[["source", "target"]]
 
 
@@ -135,10 +134,10 @@ es_callback = keras.callbacks.EarlyStopping(
 
 
 # %%
-log_dir = os.path.join(os.getcwd(), "logs")
-os.makedirs(log_dir, exist_ok=True)
+log_dir = Path.cwd() / "logs"
+log_dir.mkdir(exist_ok=True)
 csv_logger = keras.callbacks.CSVLogger(
-    os.path.join(log_dir, time.strftime("%Y%m%d-%H%M%S.csv"))
+    log_dir / time.strftime("%Y%m%d-%H%M%S.csv")
 )
 
 
@@ -158,15 +157,15 @@ history = model.fit(
 # Save the model.
 
 # %%
-model_dir = os.path.join(os.getcwd(), "models")
-os.makedirs(model_dir, exist_ok=True)
-model_name = os.path.join(model_dir, time.strftime("sage-%Y%m%d.h5"))
+model_dir = Path.cwd() / "models"
+model_dir.mkdir(exist_ok=True)
+model_name = model_dir / time.strftime("sage-%Y%m%d.h5")
 model.save(model_name)
 
 
 # %%
-model_dir = os.path.join(os.getcwd(), "models")
-model_name = os.path.join(model_dir, time.strftime("sage-%Y%m%d.h5"))
+model_dir = Path.cwd() / "models"
+model_name = model_dir / time.strftime("sage-%Y%m%d.h5")
 custom_objects = {
     "MeanAggregator": MeanAggregator,
     "AttentionalAggregator": AttentionalAggregator,
@@ -186,7 +185,7 @@ file_.close()
 x_inp_src = x_inp[0::2]
 x_out_src = x_out[0]
 embedding_model = keras.Model(inputs=x_inp_src, outputs=x_out_src)
-model_name = os.path.join(model_dir, time.strftime("sage-embedding-%Y%m%d.h5"))
+model_name = model_dir / time.strftime("sage-embedding-%Y%m%d.h5")
 embedding_model.save(model_name)
 
 
@@ -210,10 +209,10 @@ node_embeddings = embedding_model.predict(node_gen, verbose=2)
 
 
 # %%
-result_dir = os.path.join(os.getcwd(), "results")
-os.makedirs(result_dir, exist_ok=True)
+result_dir = Path.cwd() / "results"
+result_dir.mkdir(exist_ok=True)
 embedding_name = time.strftime("sage-embedding-%Y%m%d-%H%M%S.npy")
-np.save(os.path.join(result_dir, embedding_name), node_embeddings)
+np.save(result_dir / embedding_name, node_embeddings)
 print(embedding_name)
 
 
@@ -222,7 +221,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 
-df_celltype = pd.read_csv(os.path.join(result_dir, "celltype.csv"), index_col=0)
+df_celltype = pd.read_csv(result_dir / "celltype.csv", index_col=0)
 df_nodes = pd.DataFrame(data=node_embeddings, index=df_nodes.index)
 df_nodes = pd.concat([df_nodes, df_celltype], axis=1).reindex(df_nodes.index)
 X = df_nodes.loc[df_nodes["cell_type_id"] >= 0].to_numpy()

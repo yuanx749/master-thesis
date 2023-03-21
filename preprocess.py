@@ -6,6 +6,7 @@
 import os
 import random
 import re
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -26,11 +27,11 @@ np.random.seed(SEED)
 
 
 # %%
-data_dir = os.path.join(os.getcwd(), "data")
-result_dir = os.path.join(os.getcwd(), "results")
-os.makedirs(result_dir, exist_ok=True)
-fig_dir = os.path.join(os.getcwd(), "figures")
-os.makedirs(fig_dir, exist_ok=True)
+data_dir = Path.cwd() / "data"
+result_dir = Path.cwd() / "results"
+result_dir.mkdir(exist_ok=True)
+fig_dir = Path.cwd() / "figures"
+fig_dir.mkdir(exist_ok=True)
 
 # %% [markdown]
 # Read spatial gene expression data.
@@ -38,7 +39,7 @@ os.makedirs(fig_dir, exist_ok=True)
 # %%
 df = {}
 for name in ["4.5_1", "4.5_2", "4.5_3", "6.5_1", "6.5_2", "9.5_1", "9.5_2", "9.5_3"]:
-    df[name] = pd.read_csv(os.path.join(data_dir, "spots_PCW{}.csv".format(name)))
+    df[name] = pd.read_csv(data_dir / "spots_PCW{}.csv".format(name))
     print(df[name].shape)
     df[name]["pcw"] = int(name[0])
     df[name]["section"] = int(name[-1])
@@ -65,7 +66,7 @@ for i in range(3):
         axes[i, j].set_xticks([])
         axes[i, j].set_yticks([])
 fig.tight_layout()
-fig.savefig(os.path.join(fig_dir, "heart.png"))
+fig.savefig(fig_dir / "heart.png")
 plt.close()
 
 
@@ -76,10 +77,10 @@ plt.close()
 df_cell = {}
 for name in ["6.5_1", "6.5_2"]:
     df_cell_segmentation = pd.read_csv(
-        os.path.join(data_dir, "spots_w_cell_segmentation_PCW{}.csv".format(name))
+        data_dir / "spots_w_cell_segmentation_PCW{}.csv".format(name)
     )
     df_cell_calling = pd.read_csv(
-        os.path.join(data_dir, "cell_calling_PCW{}.csv".format(name))
+        data_dir / "cell_calling_PCW{}.csv".format(name)
     )
     df_cell[name] = pd.merge(
         df_cell_segmentation,
@@ -104,7 +105,7 @@ cell_type_id.sort(key=lambda x: x[1])
 cell_type_id = dict(cell_type_id)
 df_heart_cell["celltype"].fillna(value="Uncalled", inplace=True)
 df_heart_cell["cell_type_id"] = df_heart_cell["celltype"].map(cell_type_id)
-df_heart_cell["cell_type_id"].to_csv(os.path.join(result_dir, "celltype.csv"))
+df_heart_cell["cell_type_id"].to_csv(result_dir / "celltype.csv")
 print(df_heart_cell["celltype"].value_counts())
 id_cell_type = {v: k for (k, v) in cell_type_id.items()}
 id_cell_type[2] = "(2) Fibroblast-like (related to cardiac skeleton connective tissue)"
@@ -165,7 +166,7 @@ axes[2].legend(
 )
 axes[2].axis("off")
 fig.tight_layout()
-fig.savefig(os.path.join(fig_dir, "cell_type.png"), dpi=200)
+fig.savefig(fig_dir / "cell_type.png", dpi=200)
 plt.close()
 
 
@@ -215,7 +216,7 @@ for ax, cell_type in zip(axes.ravel(), list(id_cell_type.keys())[1:]):
     ax.set_xticks([])
     ax.set_yticks([])
 fig.tight_layout()
-fig.savefig(os.path.join(fig_dir, "cell_type_12.png"), dpi=100)
+fig.savefig(fig_dir / "cell_type_12.png", dpi=100)
 plt.close()
 
 
@@ -268,20 +269,20 @@ print(g.number_of_edges() / g.number_of_nodes() * 2)
 
 # %%
 df_nodes = df_heart.loc[list(g.nodes), "gene"]
-df_nodes.to_csv(os.path.join(result_dir, "nodes.csv"))
+df_nodes.to_csv(result_dir / "nodes.csv")
 df_edges = nx.to_pandas_edgelist(g)
 df_edges = df_edges.set_index("index")
-df_edges.to_csv(os.path.join(result_dir, "edges.csv"))
+df_edges.to_csv(result_dir / "edges.csv")
 
 
 # %% [markdown]
 # Fit a baseline model.
 
 # %%
-df_nodes = pd.read_csv(os.path.join(result_dir, "nodes.csv"), index_col=0)
-df_celltype = pd.read_csv(os.path.join(result_dir, "celltype.csv"), index_col=0)
+df_nodes = pd.read_csv(result_dir / "nodes.csv", index_col=0)
+df_celltype = pd.read_csv(result_dir / "celltype.csv", index_col=0)
 df_taglist = pd.read_csv(
-    os.path.join(data_dir, "taglist_heart.csv"), names=["tag", "gene"]
+    data_dir / "taglist_heart.csv", names=["tag", "gene"]
 )
 enc = OneHotEncoder(sparse=False).fit(df_taglist["gene"].to_numpy().reshape(-1, 1))
 df_nodes = df_nodes.loc[df_nodes.index.str.startswith("6")]
